@@ -98,6 +98,11 @@ const ChatThread = (props: {
             if (entry.type !== "text" && entry.type !== "Text") return null
             return (
               <Typography key={entry.id} variant="body1">
+                <Typography component="span" variant="body1" color="primary">
+                  {props.userIDs[(entry.sender as any)?.communicationUserId] ??
+                    "Unknown"}
+                  :
+                </Typography>
                 {entry.type === "text"
                   ? entry.content?.message
                   : (entry as any).message}
