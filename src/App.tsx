@@ -6,12 +6,12 @@ import Home from "./pages/Home"
 import Chat from "./pages/Chat"
 
 type UserData = {
-  data: any
+  data: undefined | { token: string; user: { communicationUserId: string } }
   setData: React.Dispatch<any>
 }
 
 export const UserContext = React.createContext<UserData>({
-  data: null,
+  data: undefined,
   setData: () => {},
 })
 

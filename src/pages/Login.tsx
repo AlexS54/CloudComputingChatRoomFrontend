@@ -28,9 +28,13 @@ const Login = (props: { isRegister?: boolean }) => {
     const body: any = { username: userName, password }
     if (props.isRegister) body.confirmPassword = confirmPass
 
-    const response = await backendAPI.post(`/users/${path}`, body)
-    setData(response.data)
-    navigate("/chat")
+    try {
+      const response = await backendAPI.post(`/users/${path}`, body)
+      setData(response.data)
+      navigate("/chat")
+    } catch (e: any) {
+      alert(e.response.data.message)
+    }
   }
 
   const submitOnEnter: React.KeyboardEventHandler = (e) => {

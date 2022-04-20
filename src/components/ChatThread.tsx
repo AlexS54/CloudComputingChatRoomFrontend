@@ -21,6 +21,7 @@ const maxMessages = 15
 const ChatThread = (props: {
   thread: ChatThreadItem | undefined
   client: ChatClient
+  userIDs: Record<string, string>
   onClose: () => void
 }) => {
   const [currentMsg, setCurrentMsg] = useState("")
@@ -76,10 +77,7 @@ const ChatThread = (props: {
         .sendMessage({
           content: currentMsg,
         })
-        .then(async (result) => {
-          const newMessage = await chatThreadClient.getMessage(result.id)
-          setMessages((prevState) => [...prevState, newMessage])
-        })
+        .then()
       setCurrentMsg("")
     }
   }, [chatThreadClient, currentMsg])
@@ -90,10 +88,13 @@ const ChatThread = (props: {
         {[...messages]
           .sort((a, b) => a.createdOn.getTime() - b.createdOn.getTime())
           .map((entry) => {
-            if (entry.type !== "text") return null
+            // @ts-ignore
+            if (entry.type !== "text" && entry.type !== "Text") return null
             return (
               <Typography key={entry.id} variant="body1">
-                {entry.content?.message}
+                {entry.type === "text"
+                  ? entry.content?.message
+                  : (entry as any).message}
               </Typography>
             )
           })}
