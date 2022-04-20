@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react"
+import React, { useCallback, useContext, useEffect, useState } from "react"
 import { Box, Button, ButtonBase, Typography } from "@mui/material"
 
 import { ChatClient, ChatThreadItem } from "@azure/communication-chat"
@@ -6,6 +6,7 @@ import { AzureCommunicationTokenCredential } from "@azure/communication-common"
 import constants from "../utils/constants"
 import CreateChatThreadDialog from "../components/CreateChatThreadDialog"
 import ChatThread from "../components/ChatThread"
+import { UserContext } from "../App"
 
 const Chat = () => {
   const [chatClient, setChatClient] = useState<ChatClient | undefined>()
@@ -13,7 +14,15 @@ const Chat = () => {
   const [availableChats, setAvailableChats] = useState<ChatThreadItem[]>([])
   const [createThreadDialogOpen, setCreateThreadDialogOpen] = useState(false)
 
+  const { data: userData } = useContext(UserContext)
+
   useEffect(() => {
+    if (userData == null) {
+      alert("Invalid user data!")
+      return
+    }
+
+    // TODO : get token from userData
     const chatClient = new ChatClient(
       constants.communcationsEndpointURL,
       new AzureCommunicationTokenCredential(
@@ -23,7 +32,7 @@ const Chat = () => {
     chatClient
       .startRealtimeNotifications()
       .then(() => setChatClient(chatClient))
-  }, [])
+  }, [userData])
 
   const fetchChatThreads = useCallback(async () => {
     if (chatClient == null) return
