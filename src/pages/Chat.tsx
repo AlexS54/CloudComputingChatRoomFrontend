@@ -1,19 +1,26 @@
 import React, { useCallback, useContext, useEffect, useState } from "react"
 import { Box, Button, ButtonBase, Typography } from "@mui/material"
 
-import { ChatClient, ChatThreadItem } from "@azure/communication-chat"
+import {
+  ChatClient,
+  ChatMessageReceivedEvent,
+  ChatThreadItem,
+} from "@azure/communication-chat"
 import { AzureCommunicationTokenCredential } from "@azure/communication-common"
 import constants, { backendAPI } from "../utils/constants"
 import CreateChatThreadDialog from "../components/CreateChatThreadDialog"
 import ChatThread from "../components/ChatThread"
 import { UserContext } from "../App"
+import { useNavigate } from "react-router-dom"
 
 const Chat = () => {
+  const navigate = useNavigate()
   const [chatClient, setChatClient] = useState<ChatClient | undefined>()
   const [currentChat, setCurrentChat] = useState<ChatThreadItem | undefined>()
   const [availableChats, setAvailableChats] = useState<ChatThreadItem[]>([])
   const [createThreadDialogOpen, setCreateThreadDialogOpen] = useState(false)
   const [userIDs, setUserIDs] = useState<Record<string, string>>({})
+  const [latestMessage, setLatestMessage] = useState<ChatMessageReceivedEvent>()
 
   const { data: userData } = useContext(UserContext)
 
@@ -26,6 +33,7 @@ const Chat = () => {
   useEffect(() => {
     if (userData == null) {
       alert("Invalid user data!")
+      navigate("/")
       return
     }
 
@@ -33,10 +41,13 @@ const Chat = () => {
       constants.communcationsEndpointURL,
       new AzureCommunicationTokenCredential(userData.token)
     )
-    chatClient
-      .startRealtimeNotifications()
-      .then(() => setChatClient(chatClient))
-  }, [userData])
+    chatClient.startRealtimeNotifications().then(() => {
+      chatClient.on("chatMessageReceived", (e) => {
+        setLatestMessage(e)
+      })
+      setChatClient(chatClient)
+    })
+  }, [userData, navigate])
 
   const fetchChatThreads = useCallback(async () => {
     if (chatClient == null) return
@@ -110,6 +121,7 @@ const Chat = () => {
           thread={currentChat}
           client={chatClient}
           userIDs={userIDs}
+          latestMessage={latestMessage}
           onClose={() => setCurrentChat(undefined)}
         />
       )}

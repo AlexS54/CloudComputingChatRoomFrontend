@@ -1,6 +1,7 @@
 import {
   ChatClient,
   ChatMessage,
+  ChatMessageReceivedEvent,
   ChatThreadClient,
   ChatThreadItem,
 } from "@azure/communication-chat"
@@ -21,13 +22,12 @@ const maxMessages = 15
 const ChatThread = (props: {
   thread: ChatThreadItem | undefined
   client: ChatClient
+  latestMessage?: ChatMessageReceivedEvent
   userIDs: Record<string, string>
   onClose: () => void
 }) => {
   const [currentMsg, setCurrentMsg] = useState("")
-  const [chatThreadClient, setChatThreadClient] = useState<
-    ChatThreadClient | undefined
-  >()
+  const [chatThreadClient, setChatThreadClient] = useState<ChatThreadClient>()
   const [messages, setMessages] = useState<ChatMessage[]>([])
 
   const fetchMessages = async (client: ChatThreadClient) => {
@@ -47,13 +47,19 @@ const ChatThread = (props: {
   }, [messages])
 
   useEffect(() => {
-    props.client.on("chatMessageReceived", (e) => {
-      setMessages((prevState) => [
-        ...prevState,
-        { ...e, sequenceId: "", type: e.type as any },
-      ])
-    })
-  }, [props.client])
+    if (props.latestMessage == null || chatThreadClient == null) return
+
+    if (props.latestMessage.threadId !== chatThreadClient.threadId) return
+
+    setMessages((prevState) => [
+      ...prevState,
+      {
+        ...(props.latestMessage as ChatMessageReceivedEvent),
+        sequenceId: "",
+        type: props.latestMessage?.type as any,
+      },
+    ])
+  }, [props.latestMessage, chatThreadClient])
 
   useEffect(() => {
     setCurrentMsg("")
