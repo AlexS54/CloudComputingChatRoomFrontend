@@ -3,7 +3,7 @@ import { Box, Button, ButtonBase, Typography } from "@mui/material"
 
 import { ChatClient, ChatThreadItem } from "@azure/communication-chat"
 import { AzureCommunicationTokenCredential } from "@azure/communication-common"
-import constants from "../utils/constants"
+import constants, { backendAPI } from "../utils/constants"
 import CreateChatThreadDialog from "../components/CreateChatThreadDialog"
 import ChatThread from "../components/ChatThread"
 import { UserContext } from "../App"
@@ -13,8 +13,15 @@ const Chat = () => {
   const [currentChat, setCurrentChat] = useState<ChatThreadItem | undefined>()
   const [availableChats, setAvailableChats] = useState<ChatThreadItem[]>([])
   const [createThreadDialogOpen, setCreateThreadDialogOpen] = useState(false)
+  const [userIDs, setUserIDs] = useState<Record<string, string>>({})
 
   const { data: userData } = useContext(UserContext)
+
+  useEffect(() => {
+    backendAPI.get(`/users/communication-ids`).then((response) => {
+      setUserIDs(response.data)
+    })
+  }, [])
 
   useEffect(() => {
     if (userData == null) {
@@ -51,12 +58,19 @@ const Chat = () => {
     async (topic: string) => {
       if (chatClient == null) return
 
-      const result = await chatClient.createChatThread({ topic })
+      const result = await chatClient.createChatThread(
+        { topic },
+        {
+          participants: Object.keys(userIDs).map((commID) => ({
+            id: { communicationUserId: commID },
+          })),
+        }
+      )
       setCurrentChat(result.chatThread)
       setCreateThreadDialogOpen(false)
       fetchChatThreads().then()
     },
-    [chatClient, fetchChatThreads]
+    [chatClient, fetchChatThreads, userIDs]
   )
 
   return (
